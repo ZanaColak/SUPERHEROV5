@@ -1,13 +1,11 @@
 package com.example.superherov5.repositories;
 
 import com.example.superherov5.dto.SuperheroFormDTO;
-import com.example.superherov5.model.Superhero;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 
 import java.sql.*;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 @Repository
@@ -18,40 +16,61 @@ public class DBRepository {
     private String UID;
     @Value("${spring.datasource.password}")
     private String Pwd;
+    public void addSuperHero(SuperheroFormDTO form) {
+        try (Connection con = DriverManager.getConnection(DbUrl, UID, Pwd)) {
+            // ID's
+            int cityId = 0;
+            int heroId = 0;
+            List<Integer> powerIDs = new ArrayList<>();
 
-    public Connection connect() {
-        Connection con = null;
-        try {
-            con = DriverManager.getConnection(DbUrl, UID, Pwd);
+            // find city_id
+            String SQL1 = "select city_id from city where name = ?;";
+            PreparedStatement pstmt = con.prepareStatement(SQL1);
+            pstmt.setString(1, form.getCity());
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                cityId = rs.getInt("city_id");
+            }
+
+            // insert row in superhero table
+            String SQL2 = "insert into superhero (hero_name, real_name, creation_year, city_id) " +
+                    "values(?, ?, ?, ?);";
+            pstmt = con.prepareStatement(SQL2, Statement.RETURN_GENERATED_KEYS); // return autoincremented key
+            pstmt.setString(1, form.getHeroName());
+            pstmt.setString(2, form.getRealName());
+            pstmt.setInt(3, form.getCreationYear());
+            pstmt.setInt(4, cityId);
+            int rows = pstmt.executeUpdate();
+            rs = pstmt.getGeneratedKeys();
+            if (rs.next()) {
+                heroId = rs.getInt(1);
+            }
+
+
+            // find power_ids
+            String SQL3 = "select power_id from superpower where name = ?;";
+            pstmt = con.prepareStatement(SQL3);
+
+            for (String power : form.getPowerList()) {
+                pstmt.setString(1, power);
+                rs = pstmt.executeQuery();
+                if (rs.next()) {
+                    powerIDs.add(rs.getInt("power_id"));
+                }
+            }
+
+            // insert entries in superhero_powers join table
+            String SQL4 = "insert into superhero_powers values (?,?,'high');";
+            pstmt = con.prepareStatement(SQL4);
+
+            for (int i = 0; i < powerIDs.size(); i++) {
+                pstmt.setInt(1, heroId);
+                pstmt.setInt(2, powerIDs.get(i));
+                rows = pstmt.executeUpdate();
+            }
+
         } catch (SQLException e) {
             throw new RuntimeException(e);
-        }
-        return con;
-    }
-
-    public List<SuperheroFormDTO> getAllSuperHeroes() {
-        List<SuperheroFormDTO> superheroList = new ArrayList<>();
-        try {
-            String SQL = "SELECT superhero.id, superhero.superheroName, superhero.realName, superhero.creationYear,powers.powerName, city.cityName\n" +
-                    "        FROM superhero\n" +
-                    "        INNER JOIN powers ON superhero.id = powers.superhero_id\n" +
-                    "        RIGHT JOIN city ON powers.superhero_id = city.superhero_id;";
-            Statement stmt = connect().createStatement();
-            ResultSet rs = stmt.executeQuery(SQL);
-
-            while (rs.next()) {
-                int heroId = rs.getInt(1);
-                String heroName = rs.getString("superheroName");
-                String realName = rs.getString("realName");
-                int creationYear = rs.getInt(1);
-                String city = rs.getString("cityName");
-                List<String> powerList = Collections.singletonList(rs.getString("powerName"));
-                superheroList.add(new SuperheroFormDTO(heroId, heroName, realName, creationYear, city, powerList));
-            }
-            return superheroList;
-
-        } catch (SQLException e) {
-            throw new RuntimeException();
         }
     }
 }
