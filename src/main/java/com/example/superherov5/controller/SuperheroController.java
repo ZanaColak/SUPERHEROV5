@@ -1,27 +1,16 @@
 package com.example.superherov5.controller;
 
-import com.example.superherov5.model.Superhero;
-import com.example.superherov5.repositories.DBRepository;
+import com.example.superherov5.service.SuperheroService;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 @Controller
-@RequestMapping
+@RequestMapping("/")
 public class SuperheroController {
 
-    DBRepository dbRepository;
+    private final SuperheroService service;
 
-    public SuperheroController(DBRepository dbRepository) {
-        this.dbRepository = dbRepository;
+    public SuperheroController(SuperheroService service) {
+        this.service = service;
     }
-    @GetMapping("/superhero")
-    public String showForm(Model model) {
-        Superhero superhero = new Superhero();
-        model.addAttribute("superhero", superhero);
-        return "registerForm";
-
-    }
-
 }
