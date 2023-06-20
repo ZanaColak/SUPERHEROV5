@@ -6,7 +6,7 @@ import java.util.List;
 
 public interface ISuperheroRepository {
     List<Superhero> getAll();
-    void save(Superhero hero);
+    Superhero createSuperhero(Superhero hero);
     void saveAll(List<Superhero> superheroes);
 
     List<String> getCities();

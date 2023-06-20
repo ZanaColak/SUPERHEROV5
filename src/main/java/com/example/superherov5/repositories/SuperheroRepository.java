@@ -37,8 +37,23 @@ public class SuperheroRepository implements ISuperheroRepository {
     }
 
     @Override
-    public void save(Superhero hero) {
+    public Superhero createSuperhero(Superhero hero) {
+        try {
+            Connection conn = DB_Connector.getConnection();
+            String SQL = "INSERT INTO superhero (heroName, realName, creationYear, city_id) VALUES(?,?,?,?)";
+            PreparedStatement preparedStatement = conn.prepareStatement(SQL);
 
+            preparedStatement.setString(1, hero.getHeroName());
+            preparedStatement.setString(2, hero.getRealName());
+            preparedStatement.setInt(3, hero.getCreationYear());
+            preparedStatement.setInt(4, hero.getCityID());
+            preparedStatement.executeUpdate();
+
+            return hero;
+
+        }catch (SQLException e){
+            throw new RuntimeException();
+        }
     }
 
     @Override

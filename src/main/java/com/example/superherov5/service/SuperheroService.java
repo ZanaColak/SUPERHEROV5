@@ -17,4 +17,7 @@ public class SuperheroService {
     public List<Superhero> getAll() {
         return iSuperheroRepository.getAll();
     }
+    public Superhero createSuperhero(Superhero hero) {
+        return iSuperheroRepository.createSuperhero(hero);
+    }
 }
